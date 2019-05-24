@@ -1,14 +1,19 @@
 <?php
 namespace Learning\GreetingMessage\Controller\Index;
 use \Magento\Framework\App\Bootstrap;
+use \Learning\GreetingMessage\Service;
 class Test extends \Magento\Framework\App\Action\Action
 {
 	protected $_pageFactory;
-
+        protected $_importimageservice;
+        
 	public function __construct(
 		\Magento\Framework\App\Action\Context $context,
-		\Magento\Framework\View\Result\PageFactory $pageFactory)
+                \Magento\Framework\View\Result\PageFactory $pageFactory,
+                \Learning\GreetingMessage\Service\ImportImageService $importimageservice
+                )
 	{
+                $this->_importimageservice = $importimageservice;
 		$this->_pageFactory = $pageFactory;
 		return parent::__construct($context);
 	}
@@ -35,7 +40,7 @@ class Test extends \Magento\Framework\App\Action\Action
             $conn = mysqli_connect(SERVER, USER, PASSWORD) or die ('Error connecting to mysql'); 
             mysqli_select_db($conn, DB)or die ('Error selecting to db');
 		
-            $query = "SELECT  * FROM `api_product_new` WHERE 1 limit 0,1000; ";
+            $query = "SELECT  * FROM `api_product_new` WHERE 1 limit 0,10; ";
             $result = $conn->query($query) or die($conn->error.__LINE__);
             if($result->num_rows > 0 ){ 
                 while($prod_data = $result->fetch_assoc()) 
@@ -66,6 +71,7 @@ class Test extends \Magento\Framework\App\Action\Action
                             $product_description = $prod_data['product_description']; /* Product Description */	
                             $product_quantity = $prod_data['quantity']; /* Product Quantity */	
                             $product_gauge = $prod_data['diameter']; 
+                            $product_image = $prod_data['product_image']; 
                             $product_api = "Yes";
                             $sku = $product_sku;			
                             if($prod_data['brand'] !=="NULL" ) 
@@ -239,6 +245,14 @@ class Test extends \Magento\Framework\App\Action\Action
                                 $product->save();
                             }
                             
+                            // adding images to product 
+                            $imagePath = $product_image; // path of the image
+                            $this->_importimageservice->execute($product, $imagePath,true,array('image', 'small_image', 'thumbnail'));
+                           // $tmpDir = $this->getMediaDirTmpDir();
+                           // $product->addImageToMediaGallery($imagePath, array('image', 'small_image', 'thumbnail'), false, false);
+                            $product->save();
+                            
+                            
                             $prodLoad = $objectManager->get('Magento\Catalog\Model\Product');
                             $prodID = $objectManager->get('Magento\Catalog\Model\Product')->getIdBySku($product_sku);
                             if ($prodID != '' || $prodID != null )
@@ -257,7 +271,7 @@ class Test extends \Magento\Framework\App\Action\Action
                                     echo $e->getMessage();
                                 }
                                 //Mage::log('New Product Insert Updated'.$prodID , null, 'scriptreport.log');
-                                $logger->info('New Product Insert Updated'.$prodID );  
+                                $logger->info('New Product Insert Updated '.$prodID." sku ".$product_sku);  
                             }
                            // exit;
                      }
