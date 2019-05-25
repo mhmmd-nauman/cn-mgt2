@@ -17,8 +17,7 @@ class Test extends \Magento\Framework\App\Action\Action
                 \Magento\Framework\View\Result\PageFactory $pageFactory,
                 \Learning\GreetingMessage\Service\ImportImageService $importimageservice,
                 \Magento\CatalogInventory\Api\StockStateInterface $stockStateInterface,
-                \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-                \Magento\Catalog\Model\ProductFactory $productFactory
+                \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
                 )
 	{
                 $this->_importimageservice = $importimageservice;
@@ -26,8 +25,6 @@ class Test extends \Magento\Framework\App\Action\Action
                 
                 $this->_stockStateInterface = $stockStateInterface;
                 $this->_stockRegistry = $stockRegistry;
-                
-                $this->productFactory = $productFactory;
                 
 		return parent::__construct($context);
 	}
@@ -54,7 +51,7 @@ class Test extends \Magento\Framework\App\Action\Action
             $conn = mysqli_connect(SERVER, USER, PASSWORD) or die ('Error connecting to mysql'); 
             mysqli_select_db($conn, DB)or die ('Error selecting to db');
 		
-            $query = "SELECT  * FROM `api_product_new` WHERE final_script_run = '0' limit 0,2; ";
+            $query = "SELECT  * FROM `api_product_new` WHERE 1 limit 0,10; ";
             $result = $conn->query($query) or die($conn->error.__LINE__);
             if($result->num_rows > 0 ){ 
                 while($prod_data = $result->fetch_assoc()) 
@@ -63,7 +60,6 @@ class Test extends \Magento\Framework\App\Action\Action
                     $array[]= 'SKU'.$prod_data['product_id'];
                     $product_ap = $prod_data['product_price']; /* Product Advertised Price */	
                     $productId = $objectManager->get('Magento\Catalog\Model\Product')->getIdBySku($checksku);
-                    $product_quantity = $prod_data['quantity']; /* Product Quantity */
                     if(!$productId)
                     {
                             //$product_availability = $product_data['availability'];
@@ -84,7 +80,7 @@ class Test extends \Magento\Framework\App\Action\Action
                             $product_shape = $prod_data['shape']; /* Product Shape */	
                             $product_origin = $prod_data['origin']; /* Product Origin */	
                             $product_description = $prod_data['product_description']; /* Product Description */	
-                            	
+                            $product_quantity = $prod_data['quantity']; /* Product Quantity */	
                             $product_gauge = $prod_data['diameter']; 
                             $product_image = $prod_data['product_image']; 
                             $product_api = "Yes";
@@ -135,8 +131,7 @@ class Test extends \Magento\Framework\App\Action\Action
                             $product->setQty($prod_data['quantity']);
                             $product->setWebsiteIds(array(1));
                             //Some db calls to get $sku and $qty and start the loop
-                            $product->setTaxClassId(2);
-                            ////tax class (0 - none, 1 - default, 2 - taxable, 4 - shipping)
+                            $product->setTaxClassId(0);
                             $product->setPrice($product_ap); # Set some price
                             $product->setVisibility(4);
                             try{
@@ -274,10 +269,6 @@ class Test extends \Magento\Framework\App\Action\Action
                             $stockItem->setQty($product_quantity);
                             $this->_stockRegistry->updateStockItemBySku($product_sku, $stockItem);
                             
-                            // enable disable product
-                           // $product->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED);
-                           // $product->save();
-                            
                             //$prodLoad = $objectManager->get('Magento\Catalog\Model\Product');
                             //$prodID = $objectManager->get('Magento\Catalog\Model\Product')->getIdBySku($product_sku);
                             //if ($prodID != '' || $prodID != null )
@@ -291,65 +282,13 @@ class Test extends \Magento\Framework\App\Action\Action
                                 //$stockItem->save(); //save stock of item
                                 //$prodLoad->save(); //  also save product
                                 //Mage::log('New Product Insert Updated'.$prodID , null, 'scriptreport.log');
-                                $logger->info('New Product Insert -  sku '.$product_sku . " qty $product_quantity ");  
+                                $logger->info('New Product Insert Updated  sku '.$product_sku . " qty $product_quantity ");  
                            // }
                            // exit;
-                     }else{
-                        // product exists we need to update the quantity 
-                        $product_sku = $checksku;
-                        $stockItem = $this->_stockRegistry->getStockItemBySku($product_sku);
-                        $stockItem->setQty($product_quantity);
-                        $this->_stockRegistry->updateStockItemBySku($product_sku, $stockItem);
-                         
-                        $logger->info("Update Existing Product Quantity - sku ".$checksku." - qty $product_quantity" );
                      }
-                    //
-                    //update final script 
-                     $updatequery = 'UPDATE `api_product_new` SET final_script_run = "1" WHERE product_id = '.$prod_data['product_id'];
-                     $conn->query($updatequery) or die($conn->error.__LINE__);
+                    //$logger->info("Info".$checksku."----- Id  1 " );          
                 }
             }
-            
-            // enable disable products
-            if(count($array)>0) {
-                //exit;
-                $productCollection = $objectManager->create('Magento\Catalog\Model\ResourceModel\Product\CollectionFactory');
-                $collection = $productCollection->create()
-                ->addAttributeToSelect('*')
-                ->load();
-                foreach ($collection as $_product)
-                {				
-                    $productsku[] = $_product->getSku();
-                }
-                //echo "from magento ";
-               // echo "<pre>";
-                //print_r($productsku);
-                //echo "</pre>";
-                 
-                foreach($productsku as $arr)
-                {
-                    $sku = $arr;
-                    $productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
-                    $product = $productRepository->get($sku);
-                    
-                    if(in_array($arr, $array))
-                    {
-                        
-                        $product->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED);
-                        $product->save();
-                        $logger->info("Enabled Product - sku ".$sku." " );
-                    }
-                    else
-                    {
-                        $product->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED);
-                        $product->save();
-                        $logger->info("Disabled Product - sku ".$sku." " );
-
-                    }
-                }
-            }
-            
-            
             exit;
 		
 		$objectManager = \Magento\Framework\App\ObjectManager::getInstance(); // instance of object manager
