@@ -311,7 +311,14 @@ class Test extends \Magento\Framework\App\Action\Action
             }
             
             // enable disable products
-            if(count($array)>0) {
+            $query = "SELECT  * FROM `api_product_new` WHERE 1 ; ";
+            $result = $conn->query($query) or die($conn->error.__LINE__);
+            if($result->num_rows > 0 ){ 
+                while($prod_data = $result->fetch_assoc()){
+                    $products_in_api[]= 'SKU'.$prod_data['product_id'];
+                }
+            }
+            if(count($products_in_api)>0) {
                 //exit;
                 $productCollection = $objectManager->create('Magento\Catalog\Model\ResourceModel\Product\CollectionFactory');
                 $collection = $productCollection->create()
@@ -326,13 +333,13 @@ class Test extends \Magento\Framework\App\Action\Action
                 //print_r($productsku);
                 //echo "</pre>";
                  
-                foreach($productsku as $arr)
+                foreach($productsku as $sku)
                 {
-                    $sku = $arr;
+                    
                     $productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
                     $product = $productRepository->get($sku);
                     
-                    if(in_array($arr, $array))
+                    if(in_array($sku, $products_in_api))
                     {
                         
                         $product->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED);
