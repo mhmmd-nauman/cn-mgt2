@@ -36,7 +36,7 @@ class Test extends \Magento\Framework\App\Action\Action
 
 	public function execute()
 	{
-            
+            exit();
             //ready object manager
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
             
