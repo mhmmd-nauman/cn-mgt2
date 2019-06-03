@@ -43,26 +43,43 @@ public function execute(\Magento\Framework\Event\Observer $observer)
         //$shippingAddressObj = $order_info->getShippingAddress();
         $shippingAddressObj = $this->_checkoutSession->getQuote()->getShippingAddress();
         $shippingAddressArray = $shippingAddressObj->getData();
-        $firstname = $shippingAddressArray['firstname'];
-        $lastname = $shippingAddressArray['lastname'];
-        $customer_name = $firstname." ".$lastname;
+		if(is_array($shippingAddressArray)){
+			$firstname = $shippingAddressArray['firstname'];
+			$lastname = $shippingAddressArray['lastname'];
+			$street = $shippingAddressArray['street'];
+			$country = $shippingAddressObj->getCountryModel()->getName();
+			$customer_name = $firstname." ".$lastname;
+			$State = $shippingAddressArray['region'];
+			$shipping_address = $street;
+			$customer_attention = "";
+			$list = array
+			(
+			"$customer_id , $customer_attention,$customer_name, "
+					. " $shipping_address,$City ,$State , $PostalCode ,"
+					. " $country, $email_address, $Telephone ",
+			);
+			$file = fopen('order_shipping_export.csv','a');  // 'a' for append to file - created if doesn't exit
+
+			foreach ($list as $line)
+			{
+				fputcsv($file,explode(',',$line));
+			}
+
+			fclose($file);
+		}
+        
+        
         //$telephone = $shippingAddressArray['telephone'];
-        $street = $shippingAddressArray['street'];
+        
         //$city = $shippingAddressArray['city'];
-        $country = $shippingAddressObj->getCountryModel()->getName();
+        
        // $email = $shippingAddressArray['email'];
-        $State = $shippingAddressArray['region'];
+        
 
        // $PostalCode = $shippingAddressArray['postcode'];
-        $shipping_address = $street;
-        $customer_attention = "";
         
-	$list = array
-        (
-        "$customer_id , $customer_attention,$customer_name, "
-                . " $shipping_address,$City ,$State , $PostalCode ,"
-                . " $country, $email_address, $Telephone ",
-        );
+        
+	
         //$order->getCustomerEmail();
         // ->getShippingAddress()->getData()
         // $shippingAddress = $order->getShippingAddress();
@@ -81,14 +98,7 @@ public function execute(\Magento\Framework\Event\Observer $observer)
                 
                 
 
-                $file = fopen('order_shipping_export.csv','a');  // 'a' for append to file - created if doesn't exit
-
-                foreach ($list as $line)
-                {
-                    fputcsv($file,explode(',',$line));
-                }
-
-                fclose($file);
+                
                 
  
 }
