@@ -3,7 +3,4 @@
 <event name="sales_order_save_after">
 	<observer name="vendor_sales_order_place_after" instance="Learning\GreetingMessage\Observer\OrderObserver" />
 </event>
-<event name="sales_order_place_before">
-    <observer name="vendor_sales_order_place_before" instance="Learning\GreetingMessage\Observer\OrderPlacebefore"/>
-</event>
 </config>

@@ -18,7 +18,7 @@ class OrderObserver implements ObserverInterface
         $this->_checkoutSession = $checkoutSession;
     }
 public function execute(\Magento\Framework\Event\Observer $observer)
-{
+{       /*
        	$statuscode = $observer->getEvent()->getOrder()->getStatus();
        	$statuslabel = $observer->getEvent()->getOrder()->getStatusLabel();
         
@@ -67,7 +67,7 @@ public function execute(\Magento\Framework\Event\Observer $observer)
 
 			fclose($file);
 		}
-        
+        */
         
         //$telephone = $shippingAddressArray['telephone'];
         
@@ -94,7 +94,7 @@ public function execute(\Magento\Framework\Event\Observer $observer)
 		$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/order-log.log');
 		$logger = new \Zend\Log\Logger();
 		$logger->addWriter($writer);
-		$logger->info('Order Updated Status -  statuscode '.$statuscode . " statuslabel $orderId "); 
+		$logger->info('Order vendor_sales_order_place_after '. "" . " "); 
                 
                 
 
